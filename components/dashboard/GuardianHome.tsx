@@ -62,9 +62,6 @@ export function GuardianHome() {
           <Card style={styles.card}>
             <Text style={styles.cardLabel}>Linked Child</Text>
             <Text style={styles.childName}>{primaryChild.fullName}</Text>
-            <Text style={styles.childMeta}>
-              {primaryChild.locationSharingEnabled ? "Location sharing on" : "Location sharing off"}
-            </Text>
           </Card>
 
           <Card style={styles.card}>
@@ -122,10 +119,6 @@ const styles = StyleSheet.create({
   },
   childName: {
     ...typography.subtitle,
-  },
-  childMeta: {
-    ...typography.caption,
-    marginTop: 2,
   },
   sosRow: {
     flexDirection: "row",

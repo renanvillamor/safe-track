@@ -8,8 +8,7 @@ import {
   signUpGuardian,
 } from "../services/supabaseAuthService";
 import { createGuardianProfile, fetchLinkedChildren, resolveProfileForUser } from "../services/profileService";
-import { mockAdministrator, mockChildren } from "../data/mockData";
-import type { Administrator, Child, DataSource, Guardian, UserRole } from "../types/safetrack";
+import type { Administrator, Child, Guardian, UserRole } from "../types/safetrack";
 
 interface AuthState {
   isBootstrapped: boolean;
@@ -21,14 +20,12 @@ interface AuthState {
   child: Child | null;
   administrator: Administrator | null;
   linkedChildren: Child[];
-  profileSource: DataSource | null;
 
   bootstrap: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (fullName: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
-  devSetRole: (role: UserRole) => void;
 }
 
 async function loadProfileIntoState(
@@ -36,19 +33,18 @@ async function loadProfileIntoState(
   set: (partial: Partial<AuthState>) => void
 ) {
   const resolved = await resolveProfileForUser(userId);
-  const { role, guardian, child, administrator } = resolved.data;
+  const { role, guardian, child, administrator } = resolved;
 
   set({
     role,
     guardian: guardian ?? null,
     child: child ?? null,
     administrator: administrator ?? null,
-    profileSource: resolved.source,
   });
 
   if (role === "guardian" && guardian) {
     const children = await fetchLinkedChildren(guardian.id);
-    set({ linkedChildren: children.data });
+    set({ linkedChildren: children });
   } else {
     set({ linkedChildren: [] });
   }
@@ -64,7 +60,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   child: null,
   administrator: null,
   linkedChildren: [],
-  profileSource: null,
 
   bootstrap: async () => {
     set({ isLoading: true, error: null });
@@ -89,6 +84,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ session: data.session });
       await loadProfileIntoState(result.userId, set);
     } catch (err) {
+      console.error("[authStore.login]", err);
       set({ error: err instanceof Error ? err.message : "Unable to sign in." });
       throw err;
     } finally {
@@ -100,19 +96,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const result = await signUpGuardian(fullName, email, password);
-      try {
-        const guardian = await createGuardianProfile(result.userId, fullName, result.email);
-        set({ role: "guardian", guardian, child: null, administrator: null, linkedChildren: mockChildren, profileSource: "supabase" });
-      } catch {
-        set({
-          role: "guardian",
-          guardian: { id: `local-${result.userId}`, userId: result.userId, fullName, email: result.email, createdAt: new Date().toISOString() },
-          child: null,
-          administrator: null,
-          linkedChildren: mockChildren,
-          profileSource: "mock",
-        });
-      }
+      const guardian = await createGuardianProfile(result.userId, fullName, result.email);
+      set({ role: "guardian", guardian, child: null, administrator: null, linkedChildren: [] });
       const { data } = await supabase.auth.getSession();
       set({ session: data.session });
     } catch (err) {
@@ -137,22 +122,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         child: null,
         administrator: null,
         linkedChildren: [],
-        profileSource: null,
         isLoading: false,
       });
     }
   },
 
   clearError: () => set({ error: null }),
-
-  devSetRole: (role) => {
-    if (!__DEV__) return;
-    if (role === "guardian") {
-      set({ role, child: null, administrator: null, linkedChildren: mockChildren });
-    } else if (role === "child") {
-      set({ role, guardian: null, administrator: null, child: mockChildren[0] });
-    } else {
-      set({ role, guardian: null, child: null, administrator: mockAdministrator });
-    }
-  },
 }));

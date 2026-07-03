@@ -17,7 +17,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           child: null,
           administrator: null,
           linkedChildren: [],
-          profileSource: null,
         });
         return;
       }

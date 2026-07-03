@@ -1,10 +1,9 @@
 import { create } from "zustand";
 import { fetchAllReports, fetchReportsForGuardian } from "../services/reportsService";
-import type { ActivityReport, DataSource } from "../types/safetrack";
+import type { ActivityReport } from "../types/safetrack";
 
 interface ReportsState {
   reports: ActivityReport[];
-  source: DataSource | null;
   isLoading: boolean;
   error: string | null;
 
@@ -14,15 +13,14 @@ interface ReportsState {
 
 export const useReportsStore = create<ReportsState>((set) => ({
   reports: [],
-  source: null,
   isLoading: false,
   error: null,
 
   loadForGuardian: async (guardianId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetchReportsForGuardian(guardianId);
-      set({ reports: res.data, source: res.source });
+      const reports = await fetchReportsForGuardian(guardianId);
+      set({ reports });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Could not load reports." });
     } finally {
@@ -33,8 +31,8 @@ export const useReportsStore = create<ReportsState>((set) => ({
   loadAll: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetchAllReports();
-      set({ reports: res.data, source: res.source });
+      const reports = await fetchAllReports();
+      set({ reports });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Could not load reports." });
     } finally {

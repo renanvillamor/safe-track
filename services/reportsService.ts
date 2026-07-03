@@ -1,6 +1,5 @@
 import { supabase } from "../lib/supabase";
-import { mockActivityReports } from "../data/mockData";
-import type { ActivityReport, WithSource } from "../types/safetrack";
+import type { ActivityReport } from "../types/safetrack";
 
 function mapRow(row: any): ActivityReport {
   return {
@@ -19,35 +18,23 @@ function mapRow(row: any): ActivityReport {
   };
 }
 
-export async function fetchReportsForGuardian(guardianId: string): Promise<WithSource<ActivityReport[]>> {
-  try {
-    const { data, error } = await supabase
-      .from("activity_reports")
-      .select("*")
-      .eq("guardian_id", guardianId)
-      .order("generated_at", { ascending: false });
+export async function fetchReportsForGuardian(guardianId: string): Promise<ActivityReport[]> {
+  const { data, error } = await supabase
+    .from("activity_reports")
+    .select("*")
+    .eq("guardian_id", guardianId)
+    .order("generated_at", { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      return { data: mockActivityReports, source: "mock" };
-    }
-    return { data: data.map(mapRow), source: "supabase" };
-  } catch {
-    return { data: mockActivityReports, source: "mock" };
-  }
+  if (error) throw error;
+  return (data ?? []).map(mapRow);
 }
 
-export async function fetchAllReports(): Promise<WithSource<ActivityReport[]>> {
-  try {
-    const { data, error } = await supabase
-      .from("activity_reports")
-      .select("*")
-      .order("generated_at", { ascending: false });
+export async function fetchAllReports(): Promise<ActivityReport[]> {
+  const { data, error } = await supabase
+    .from("activity_reports")
+    .select("*")
+    .order("generated_at", { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      return { data: mockActivityReports, source: "mock" };
-    }
-    return { data: data.map(mapRow), source: "supabase" };
-  } catch {
-    return { data: mockActivityReports, source: "mock" };
-  }
+  if (error) throw error;
+  return (data ?? []).map(mapRow);
 }

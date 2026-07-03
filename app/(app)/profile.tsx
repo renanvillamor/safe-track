@@ -8,9 +8,7 @@ import { ProfileHeader } from "../../components/profile/ProfileHeader";
 import { ProfileSection } from "../../components/profile/ProfileSection";
 import { useAuthStore } from "../../store/authStore";
 import { colors, spacing, typography } from "../../constants/theme";
-import { DEV_ROLE_SWITCH_ENABLED } from "../../constants/roles";
 import { showAlert } from "../../lib/platformAlert";
-import type { UserRole } from "../../types/safetrack";
 
 function SettingsRow({ icon, label, right }: { icon: keyof typeof Ionicons.glyphMap; label: string; right: ReactNode }) {
   return (
@@ -29,7 +27,6 @@ export default function ProfileScreen() {
   const child = useAuthStore((s) => s.child);
   const administrator = useAuthStore((s) => s.administrator);
   const logout = useAuthStore((s) => s.logout);
-  const devSetRole = useAuthStore((s) => s.devSetRole);
 
   const [pushEnabled, setPushEnabled] = useState(true);
 
@@ -73,16 +70,6 @@ export default function ProfileScreen() {
         <SettingsRow icon="mail-outline" label="Contact Support" right={<Ionicons name="chevron-forward" size={16} color={colors.gray} />} />
       </ProfileSection>
 
-      {DEV_ROLE_SWITCH_ENABLED ? (
-        <ProfileSection title="Dev: Mock Role Switch">
-          <View style={styles.roleSwitchRow}>
-            {(["guardian", "child", "admin"] as UserRole[]).map((r) => (
-              <Button key={r} label={r} onPress={() => devSetRole(r)} variant={role === r ? "primary" : "outline"} fullWidth={false} style={styles.roleButton} />
-            ))}
-          </View>
-        </ProfileSection>
-      ) : null}
-
       <Button label="Log Out" onPress={handleLogout} variant="danger" style={styles.logoutButton} />
     </ScreenContainer>
   );
@@ -104,13 +91,6 @@ const styles = StyleSheet.create({
   },
   privacyText: {
     ...typography.body,
-  },
-  roleSwitchRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  roleButton: {
-    paddingHorizontal: spacing.md,
   },
   logoutButton: {
     marginTop: spacing.sm,

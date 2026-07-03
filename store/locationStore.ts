@@ -4,13 +4,12 @@ import {
   fetchLatestLocationForChild,
   fetchLocationHistory,
 } from "../services/locationService";
-import type { DataSource, LocationLog } from "../types/safetrack";
+import type { LocationLog } from "../types/safetrack";
 
 interface LocationState {
   latest: LocationLog | null;
   history: LocationLog[];
   allRecords: LocationLog[];
-  source: DataSource | null;
   isLoading: boolean;
   error: string | null;
 
@@ -22,18 +21,17 @@ export const useLocationStore = create<LocationState>((set) => ({
   latest: null,
   history: [],
   allRecords: [],
-  source: null,
   isLoading: false,
   error: null,
 
   loadForChild: async (childId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const [latestRes, historyRes] = await Promise.all([
+      const [latest, history] = await Promise.all([
         fetchLatestLocationForChild(childId),
         fetchLocationHistory(childId),
       ]);
-      set({ latest: latestRes.data, history: historyRes.data, source: latestRes.source });
+      set({ latest, history });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Could not load location." });
     } finally {
@@ -44,8 +42,8 @@ export const useLocationStore = create<LocationState>((set) => ({
   loadAllRecords: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetchAllLocationRecords();
-      set({ allRecords: res.data, source: res.source });
+      const allRecords = await fetchAllLocationRecords();
+      set({ allRecords });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Could not load location records." });
     } finally {

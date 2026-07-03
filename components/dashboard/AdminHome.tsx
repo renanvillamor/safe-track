@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 import { fetchAdminSummaryMetrics } from "../../services/adminService";
 import { LoadingState } from "../common/LoadingState";
+import { ErrorState } from "../common/ErrorState";
 import { StatTile } from "./StatTile";
 import { QuickActionButton } from "./QuickActionButton";
 import { colors, spacing, typography } from "../../constants/theme";
@@ -14,20 +15,28 @@ export function AdminHome() {
   const administrator = useAuthStore((s) => s.administrator);
   const [metrics, setMetrics] = useState<AdminSummaryMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadMetrics = () => {
     let isMounted = true;
     setIsLoading(true);
-    fetchAdminSummaryMetrics().then((res) => {
-      if (isMounted) {
-        setMetrics(res.data);
-        setIsLoading(false);
-      }
-    });
+    setError(null);
+    fetchAdminSummaryMetrics()
+      .then((data) => {
+        if (isMounted) setMetrics(data);
+      })
+      .catch((err) => {
+        if (isMounted) setError(err instanceof Error ? err.message : "Could not load summary metrics.");
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
     return () => {
       isMounted = false;
     };
-  }, []);
+  };
+
+  useEffect(() => loadMetrics(), []);
 
   return (
     <View>
@@ -35,7 +44,11 @@ export function AdminHome() {
       <Text style={styles.subGreeting}>Read-only system overview.</Text>
 
       {isLoading || !metrics ? (
-        <LoadingState message="Loading summary metrics..." />
+        error ? (
+          <ErrorState message={error} onRetry={loadMetrics} />
+        ) : (
+          <LoadingState message="Loading summary metrics..." />
+        )
       ) : (
         <>
           <View style={styles.row}>

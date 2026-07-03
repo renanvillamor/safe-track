@@ -6,10 +6,8 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Administrator",
 };
 
-export const ROLE_TABLE: Record<UserRole, string> = {
-  guardian: "guardian_profiles",
-  child: "child_profiles",
-  admin: "system_administrators",
+export const ROLE_CODES: Record<UserRole, string> = {
+  guardian: "GUARDIAN",
+  child: "CHILD",
+  admin: "ADMIN",
 };
-
-export const DEV_ROLE_SWITCH_ENABLED = __DEV__;

@@ -1,6 +1,5 @@
 import { supabase } from "../lib/supabase";
-import { mockSosAlerts } from "../data/mockData";
-import type { SosAlert, SosAlertStatus, WithSource } from "../types/safetrack";
+import type { SosAlert, SosAlertStatus } from "../types/safetrack";
 
 function mapRow(row: any): SosAlert {
   return {
@@ -18,82 +17,51 @@ function mapRow(row: any): SosAlert {
   };
 }
 
-export async function fetchSosAlertsForChild(childId: string): Promise<WithSource<SosAlert[]>> {
-  try {
-    const { data, error } = await supabase
-      .from("sos_alerts")
-      .select("*")
-      .eq("child_id", childId)
-      .order("triggered_at", { ascending: false });
+export async function fetchSosAlertsForChild(childId: string): Promise<SosAlert[]> {
+  const { data, error } = await supabase
+    .from("sos_alerts")
+    .select("*")
+    .eq("child_id", childId)
+    .order("triggered_at", { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      return { data: mockSosAlerts, source: "mock" };
-    }
-    return { data: data.map(mapRow), source: "supabase" };
-  } catch {
-    return { data: mockSosAlerts, source: "mock" };
-  }
+  if (error) throw error;
+  return (data ?? []).map(mapRow);
 }
 
-export async function fetchAllSosAlerts(): Promise<WithSource<SosAlert[]>> {
-  try {
-    const { data, error } = await supabase
-      .from("sos_alerts")
-      .select("*")
-      .order("triggered_at", { ascending: false });
+export async function fetchAllSosAlerts(): Promise<SosAlert[]> {
+  const { data, error } = await supabase
+    .from("sos_alerts")
+    .select("*")
+    .order("triggered_at", { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      return { data: mockSosAlerts, source: "mock" };
-    }
-    return { data: data.map(mapRow), source: "supabase" };
-  } catch {
-    return { data: mockSosAlerts, source: "mock" };
-  }
+  if (error) throw error;
+  return (data ?? []).map(mapRow);
 }
 
-export async function triggerTestSosAlert(childId: string, childName: string, guardianId: string): Promise<WithSource<SosAlert>> {
-  const nowIso = new Date().toISOString();
-  try {
-    const { data, error } = await supabase
-      .from("sos_alerts")
-      .insert({
-        child_id: childId,
-        guardian_id: guardianId,
-        status: "active",
-        activation_method: "app_test",
-        is_test_alert: true,
-        triggered_at: nowIso,
-      })
-      .select()
-      .single();
-
-    if (error || !data) throw error ?? new Error("Insert returned no row");
-    return { data: mapRow(data), source: "supabase" };
-  } catch {
-    const mockAlert: SosAlert = {
-      id: `mock-sos-${Date.now()}`,
-      childId,
-      childName,
-      guardianId,
+export async function triggerTestSosAlert(childId: string, childName: string, guardianId: string): Promise<SosAlert> {
+  const { data, error } = await supabase
+    .from("sos_alerts")
+    .insert({
+      child_id: childId,
+      guardian_id: guardianId,
       status: "active",
-      activationMethod: "app_test",
-      isTestAlert: true,
-      triggeredAt: nowIso,
-    };
-    return { data: mockAlert, source: "mock" };
-  }
+      activation_method: "app_test",
+      is_test_alert: true,
+      triggered_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return mapRow(data);
 }
 
-export async function acknowledgeSosAlert(alertId: string): Promise<WithSource<null>> {
+export async function acknowledgeSosAlert(alertId: string): Promise<void> {
   const status: SosAlertStatus = "acknowledged";
-  try {
-    const { error } = await supabase
-      .from("sos_alerts")
-      .update({ status, acknowledged_at: new Date().toISOString() })
-      .eq("id", alertId);
-    if (error) throw error;
-    return { data: null, source: "supabase" };
-  } catch {
-    return { data: null, source: "mock" };
-  }
+  const { error } = await supabase
+    .from("sos_alerts")
+    .update({ status, acknowledged_at: new Date().toISOString() })
+    .eq("id", alertId);
+
+  if (error) throw error;
 }

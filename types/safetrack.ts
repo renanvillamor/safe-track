@@ -1,7 +1,5 @@
 export type UserRole = "guardian" | "child" | "admin";
 
-export type DataSource = "supabase" | "mock";
-
 export interface Guardian {
   id: string;
   userId: string;
@@ -17,9 +15,6 @@ export interface Child {
   guardianId: string;
   fullName: string;
   avatarUrl?: string;
-  dateOfBirth?: string;
-  smartwatchDeviceId?: string;
-  locationSharingEnabled: boolean;
   createdAt: string;
 }
 
@@ -127,9 +122,4 @@ export interface AdminSummaryMetrics {
   locationRecords: number;
   activeSosAlerts: number;
   generatedReports: number;
-}
-
-export interface WithSource<T> {
-  data: T;
-  source: DataSource;
 }

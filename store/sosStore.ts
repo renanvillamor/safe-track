@@ -5,11 +5,10 @@ import {
   fetchSosAlertsForChild,
   triggerTestSosAlert,
 } from "../services/sosService";
-import type { DataSource, SosAlert } from "../types/safetrack";
+import type { SosAlert } from "../types/safetrack";
 
 interface SosState {
   alerts: SosAlert[];
-  source: DataSource | null;
   isLoading: boolean;
   error: string | null;
   isSendingTest: boolean;
@@ -23,7 +22,6 @@ interface SosState {
 
 export const useSosStore = create<SosState>((set, get) => ({
   alerts: [],
-  source: null,
   isLoading: false,
   error: null,
   isSendingTest: false,
@@ -32,8 +30,8 @@ export const useSosStore = create<SosState>((set, get) => ({
   loadForChild: async (childId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetchSosAlertsForChild(childId);
-      set({ alerts: res.data, source: res.source });
+      const alerts = await fetchSosAlertsForChild(childId);
+      set({ alerts });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Could not load SOS alerts." });
     } finally {
@@ -44,8 +42,8 @@ export const useSosStore = create<SosState>((set, get) => ({
   loadAll: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetchAllSosAlerts();
-      set({ alerts: res.data, source: res.source });
+      const alerts = await fetchAllSosAlerts();
+      set({ alerts });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Could not load SOS alerts." });
     } finally {
@@ -56,8 +54,8 @@ export const useSosStore = create<SosState>((set, get) => ({
   sendTestAlert: async (childId, childName, guardianId) => {
     set({ isSendingTest: true, error: null });
     try {
-      const res = await triggerTestSosAlert(childId, childName, guardianId);
-      set({ lastTestAlert: res.data, alerts: [res.data, ...get().alerts] });
+      const alert = await triggerTestSosAlert(childId, childName, guardianId);
+      set({ lastTestAlert: alert, alerts: [alert, ...get().alerts] });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Could not send test alert." });
     } finally {
