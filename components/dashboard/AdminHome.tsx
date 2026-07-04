@@ -82,9 +82,7 @@ export function AdminHome() {
       )}
 
       <Text style={styles.sectionTitle}>Quick Actions</Text>
-      <QuickActionButton icon="location-outline" label="View Location Records" onPress={() => router.push("/location")} />
-      <QuickActionButton icon="warning-outline" label="View SOS Alerts" onPress={() => router.push("/sos-alerts")} />
-      <QuickActionButton icon="document-text-outline" label="View Reports" onPress={() => router.push("/reports")} />
+      <QuickActionButton icon="settings-outline" label="Manage Screen Access" onPress={() => router.push("/manage-access")} />
     </View>
   );
 }

@@ -123,3 +123,24 @@ export interface AdminSummaryMetrics {
   activeSosAlerts: number;
   generatedReports: number;
 }
+
+export interface RoleSummary {
+  id: string;
+  roleCode: string;
+  roleName: string;
+}
+
+export interface MenuItem {
+  id: string;
+  menuKey: string;
+  menuName: string;
+  routePath: string;
+  iconName?: string;
+  displayOrder: number;
+}
+
+export interface MenuPermission {
+  roleId: string;
+  menuId: string;
+  canView: boolean;
+}
