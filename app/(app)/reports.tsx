@@ -4,6 +4,7 @@ import { ScreenContainer } from "../../components/common/ScreenContainer";
 import { LoadingState } from "../../components/common/LoadingState";
 import { ErrorState } from "../../components/common/ErrorState";
 import { EmptyState } from "../../components/common/EmptyState";
+import { OfflineBanner } from "../../components/common/OfflineBanner";
 import { ReportListItem } from "../../components/reports/ReportListItem";
 import { ReportFilterBar, ReportDateFilter } from "../../components/reports/ReportFilterBar";
 import { useAuthStore } from "../../store/authStore";
@@ -23,6 +24,8 @@ export default function ReportsScreen() {
   const reports = useReportsStore((s) => s.reports);
   const isLoading = useReportsStore((s) => s.isLoading);
   const error = useReportsStore((s) => s.error);
+  const isOffline = useReportsStore((s) => s.isOffline);
+  const cachedAt = useReportsStore((s) => s.cachedAt);
   const loadForGuardian = useReportsStore((s) => s.loadForGuardian);
   const loadAll = useReportsStore((s) => s.loadAll);
   const [filter, setFilter] = useState<ReportDateFilter>("all");
@@ -49,6 +52,7 @@ export default function ReportsScreen() {
   return (
     <ScreenContainer>
       <Text style={styles.title}>Reports</Text>
+      {isOffline ? <OfflineBanner cachedAt={cachedAt} /> : null}
       <ReportFilterBar selected={filter} onSelect={setFilter} />
 
       {isLoading && reports.length === 0 ? (

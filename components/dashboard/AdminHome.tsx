@@ -3,12 +3,16 @@ import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 import { fetchAdminSummaryMetrics } from "../../services/adminService";
+import { readCache, writeCache } from "../../lib/offlineCache";
 import { LoadingState } from "../common/LoadingState";
 import { ErrorState } from "../common/ErrorState";
+import { OfflineBanner } from "../common/OfflineBanner";
 import { StatTile } from "./StatTile";
 import { QuickActionButton } from "./QuickActionButton";
 import { colors, spacing, typography } from "../../constants/theme";
 import type { AdminSummaryMetrics } from "../../types/safetrack";
+
+const METRICS_CACHE_KEY = "admin:summaryMetrics";
 
 export function AdminHome() {
   const router = useRouter();
@@ -16,6 +20,8 @@ export function AdminHome() {
   const [metrics, setMetrics] = useState<AdminSummaryMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
 
   const loadMetrics = () => {
     let isMounted = true;
@@ -23,10 +29,22 @@ export function AdminHome() {
     setError(null);
     fetchAdminSummaryMetrics()
       .then((data) => {
-        if (isMounted) setMetrics(data);
+        if (!isMounted) return;
+        setMetrics(data);
+        setIsOffline(false);
+        setCachedAt(new Date().toISOString());
+        writeCache<AdminSummaryMetrics>(METRICS_CACHE_KEY, data);
       })
-      .catch((err) => {
-        if (isMounted) setError(err instanceof Error ? err.message : "Could not load summary metrics.");
+      .catch(async (err) => {
+        if (!isMounted) return;
+        const cached = await readCache<AdminSummaryMetrics>(METRICS_CACHE_KEY);
+        if (cached) {
+          setMetrics(cached.data);
+          setIsOffline(true);
+          setCachedAt(cached.cachedAt);
+        } else {
+          setError(err instanceof Error ? err.message : "Could not load summary metrics.");
+        }
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -51,6 +69,7 @@ export function AdminHome() {
         )
       ) : (
         <>
+          {isOffline ? <OfflineBanner cachedAt={cachedAt} /> : null}
           <View style={styles.row}>
             <StatTile icon="people-outline" label="Guardian Accounts" value={metrics.guardianAccounts} />
             <StatTile icon="location-outline" label="Location Records" value={metrics.locationRecords} accentColor={colors.info} />

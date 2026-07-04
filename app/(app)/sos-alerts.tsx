@@ -4,6 +4,7 @@ import { ScreenContainer } from "../../components/common/ScreenContainer";
 import { LoadingState } from "../../components/common/LoadingState";
 import { ErrorState } from "../../components/common/ErrorState";
 import { EmptyState } from "../../components/common/EmptyState";
+import { OfflineBanner } from "../../components/common/OfflineBanner";
 import { Button } from "../../components/common/Button";
 import { SosAlertCard } from "../../components/sos/SosAlertCard";
 import { SosTestButton } from "../../components/sos/SosTestButton";
@@ -19,6 +20,8 @@ function GuardianSosView({ childId, childName, guardianId }: { childId: string; 
   const isLoading = useSosStore((s) => s.isLoading);
   const isSendingTest = useSosStore((s) => s.isSendingTest);
   const error = useSosStore((s) => s.error);
+  const isOffline = useSosStore((s) => s.isOffline);
+  const cachedAt = useSosStore((s) => s.cachedAt);
   const loadForChild = useSosStore((s) => s.loadForChild);
   const acknowledge = useSosStore((s) => s.acknowledge);
   const sendTestAlert = useSosStore((s) => s.sendTestAlert);
@@ -41,6 +44,7 @@ function GuardianSosView({ childId, childName, guardianId }: { childId: string; 
 
   return (
     <View>
+      {isOffline ? <OfflineBanner cachedAt={cachedAt} /> : null}
       <Button label="Send Test SOS Alert" onPress={handleSendTest} variant="danger" loading={isSendingTest} style={styles.testButton} />
       {alerts.length === 0 ? (
         <EmptyState icon="warning-outline" title="No SOS alerts" message="Alerts for your linked child will appear here." />
@@ -101,6 +105,8 @@ function AdminSosView() {
   const alerts = useSosStore((s) => s.alerts);
   const isLoading = useSosStore((s) => s.isLoading);
   const error = useSosStore((s) => s.error);
+  const isOffline = useSosStore((s) => s.isOffline);
+  const cachedAt = useSosStore((s) => s.cachedAt);
   const loadAll = useSosStore((s) => s.loadAll);
   const [filter, setFilter] = useState<"all" | "active">("all");
 
@@ -119,6 +125,7 @@ function AdminSosView() {
 
   return (
     <View>
+      {isOffline ? <OfflineBanner cachedAt={cachedAt} /> : null}
       <View style={styles.filterRow}>
         <Button label="All" onPress={() => setFilter("all")} variant={filter === "all" ? "primary" : "outline"} fullWidth={false} style={styles.filterButton} />
         <Button label="Active" onPress={() => setFilter("active")} variant={filter === "active" ? "primary" : "outline"} fullWidth={false} style={styles.filterButton} />

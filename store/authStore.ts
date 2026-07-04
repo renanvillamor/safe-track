@@ -7,7 +7,13 @@ import {
   signOut as signOutRequest,
   signUpGuardian,
 } from "../services/supabaseAuthService";
-import { createGuardianProfile, fetchLinkedChildren, resolveProfileForUser } from "../services/profileService";
+import {
+  createGuardianProfile,
+  fetchLinkedChildren,
+  resolveProfileForUser,
+  type ResolvedProfile,
+} from "../services/profileService";
+import { readCache, writeCache } from "../lib/offlineCache";
 import type { Administrator, Child, Guardian, UserRole } from "../types/safetrack";
 
 interface AuthState {
@@ -32,7 +38,17 @@ async function loadProfileIntoState(
   userId: string,
   set: (partial: Partial<AuthState>) => void
 ) {
-  const resolved = await resolveProfileForUser(userId);
+  const profileCacheKey = `auth:profile:${userId}`;
+  let resolved: ResolvedProfile;
+  try {
+    resolved = await resolveProfileForUser(userId);
+    writeCache<ResolvedProfile>(profileCacheKey, resolved);
+  } catch (err) {
+    const cached = await readCache<ResolvedProfile>(profileCacheKey);
+    if (!cached) throw err;
+    resolved = cached.data;
+  }
+
   const { role, guardian, child, administrator } = resolved;
 
   set({
@@ -43,8 +59,15 @@ async function loadProfileIntoState(
   });
 
   if (role === "guardian" && guardian) {
-    const children = await fetchLinkedChildren(guardian.id);
-    set({ linkedChildren: children });
+    const childrenCacheKey = `auth:linkedChildren:${guardian.id}`;
+    try {
+      const children = await fetchLinkedChildren(guardian.id);
+      set({ linkedChildren: children });
+      writeCache<Child[]>(childrenCacheKey, children);
+    } catch {
+      const cached = await readCache<Child[]>(childrenCacheKey);
+      set({ linkedChildren: cached?.data ?? [] });
+    }
   } else {
     set({ linkedChildren: [] });
   }

@@ -4,6 +4,7 @@ import { ScreenContainer } from "../../components/common/ScreenContainer";
 import { LoadingState } from "../../components/common/LoadingState";
 import { ErrorState } from "../../components/common/ErrorState";
 import { EmptyState } from "../../components/common/EmptyState";
+import { OfflineBanner } from "../../components/common/OfflineBanner";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { LocationMapCard } from "../../components/location/LocationMapCard";
@@ -27,6 +28,8 @@ function GuardianAndChildLocationView({ childId, isChild }: { childId: string; i
   const latest = useLocationStore((s) => s.latest);
   const isLoading = useLocationStore((s) => s.isLoading);
   const error = useLocationStore((s) => s.error);
+  const isOffline = useLocationStore((s) => s.isOffline);
+  const cachedAt = useLocationStore((s) => s.cachedAt);
   const loadForChild = useLocationStore((s) => s.loadForChild);
 
   useEffect(() => {
@@ -42,6 +45,7 @@ function GuardianAndChildLocationView({ childId, isChild }: { childId: string; i
 
   return (
     <View>
+      {isOffline ? <OfflineBanner cachedAt={cachedAt} /> : null}
       <Text style={styles.sectionLabel}>{isChild ? "Location Sharing" : "Latest Available Location"}</Text>
 
       {isChild ? (
@@ -76,6 +80,8 @@ function AdminLocationView() {
   const allRecords = useLocationStore((s) => s.allRecords);
   const isLoading = useLocationStore((s) => s.isLoading);
   const error = useLocationStore((s) => s.error);
+  const isOffline = useLocationStore((s) => s.isOffline);
+  const cachedAt = useLocationStore((s) => s.cachedAt);
   const loadAllRecords = useLocationStore((s) => s.loadAllRecords);
   const [selected, setSelected] = useState<LocationLog | null>(null);
 
@@ -101,6 +107,7 @@ function AdminLocationView() {
 
   return (
     <View>
+      {isOffline ? <OfflineBanner cachedAt={cachedAt} /> : null}
       <Text style={styles.sectionLabel}>Map Preview</Text>
       <LocationMapCard location={selected} height={200} />
 

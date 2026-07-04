@@ -5,12 +5,15 @@ import {
   fetchSosAlertsForChild,
   triggerTestSosAlert,
 } from "../services/sosService";
+import { readCache, writeCache } from "../lib/offlineCache";
 import type { SosAlert } from "../types/safetrack";
 
 interface SosState {
   alerts: SosAlert[];
   isLoading: boolean;
   error: string | null;
+  isOffline: boolean;
+  cachedAt: string | null;
   isSendingTest: boolean;
   lastTestAlert: SosAlert | null;
 
@@ -24,16 +27,25 @@ export const useSosStore = create<SosState>((set, get) => ({
   alerts: [],
   isLoading: false,
   error: null,
+  isOffline: false,
+  cachedAt: null,
   isSendingTest: false,
   lastTestAlert: null,
 
   loadForChild: async (childId: string) => {
     set({ isLoading: true, error: null });
+    const cacheKey = `sos:child:${childId}`;
     try {
       const alerts = await fetchSosAlertsForChild(childId);
-      set({ alerts });
+      set({ alerts, isOffline: false, cachedAt: new Date().toISOString() });
+      writeCache<SosAlert[]>(cacheKey, alerts);
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : "Could not load SOS alerts." });
+      const cached = await readCache<SosAlert[]>(cacheKey);
+      if (cached) {
+        set({ alerts: cached.data, isOffline: true, cachedAt: cached.cachedAt });
+      } else {
+        set({ error: err instanceof Error ? err.message : "Could not load SOS alerts." });
+      }
     } finally {
       set({ isLoading: false });
     }
@@ -41,11 +53,18 @@ export const useSosStore = create<SosState>((set, get) => ({
 
   loadAll: async () => {
     set({ isLoading: true, error: null });
+    const cacheKey = "sos:all";
     try {
       const alerts = await fetchAllSosAlerts();
-      set({ alerts });
+      set({ alerts, isOffline: false, cachedAt: new Date().toISOString() });
+      writeCache<SosAlert[]>(cacheKey, alerts);
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : "Could not load SOS alerts." });
+      const cached = await readCache<SosAlert[]>(cacheKey);
+      if (cached) {
+        set({ alerts: cached.data, isOffline: true, cachedAt: cached.cachedAt });
+      } else {
+        set({ error: err instanceof Error ? err.message : "Could not load SOS alerts." });
+      }
     } finally {
       set({ isLoading: false });
     }
